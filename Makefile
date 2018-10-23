@@ -4,18 +4,29 @@ CXX := g++
 LDFLAGS := 
 ALL_FILES = $(shell find . \( -name "*.h" -or -name *.cxx \) -exec ls {} \;)
 SRCS := $(shell find . -name '*.cxx' | sed 's:^\./::g')
+
 OBJDIR := obj
+SRC_TEST := $(shell echo $(SRCS) | tr ' ' '\n' | grep test | tr '\n' ' ')
 
 OBJS :=  $(SRCS:%.cxx=$(OBJDIR)/%.o)
 
-program: $(OBJS)
-	$(CXX) $(OBJS) $(LDFLAGS) -o $@
+OBJS_SRC := $(shell echo $(OBJS) | tr ' ' '\n' | grep src | tr '\n' ' ')
+OBJS_TEST := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep test | tr '\n' ' ')
+OBJS_OTHER := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep -v test | tr '\n' ' ')
+
+
+program: $(OBJS_OTHER) $(OBJS_SRC)
+	$(CXX) $(OBJS_OTHER)  $(OBJS_SRC) $(LDFLAGS) -o $@
+
+test.bin :$(OBJS_TEST) $(OBJS_SRC)
+	$(CXX) $(OBJS_TEST)  $(OBJS_SRC) $(LDFLAGS) -o $@
+
 
 -include $(OBJS:.o=.d)
 
 
 $(OBJDIR)/%.o: %.cxx
-	@echo $(SRCS)
+	echo $(SRC_TEST)
 	@mkdir -p `dirname $@`
 	$(CXX) -c $(CFLAGS) $< -o $@
 	$(CXX) -MM $(CFLAGS) $*.cxx | sed "s:^:`dirname $@`/:" > $(OBJDIR)/$*.d
