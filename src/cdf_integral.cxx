@@ -1,31 +1,12 @@
 
 #include "GenericAVL.h"
+#include<src/cdf_integral.h>
 #include <boost/math/special_functions/erf.hpp>
 #include<src/cdf_integral.h>
 #include <map>
 inline double gauss_quantile(double q) {
     return -sqrt(2) * boost::math::erfc_inv(2 * q);
 }
-
-struct Point {
-    double x, y;
-    friend std::ostream &operator<<(std::ostream &op, Point p) {
-        op << "{x=" << p.x << ", y=" << p.y << "}";
-
-        return op;
-    }
-};
-
-struct PointOrderByX {
-    bool operator()(Point a, Point b) {
-        return a.x < b.x or (a.x == b.x and a.y < b.y);
-    }
-};
-struct PointOrderByY {
-    bool operator()(Point a, Point b) {
-        return a.y < b.y or (a.y == b.y and a.x < b.x);
-    }
-};
 
 std::vector<double> get_cum_value_brute(std::vector<Point> points) {
     std::vector<double> result;
@@ -42,8 +23,10 @@ std::vector<double> get_cum_value_brute(std::vector<Point> points) {
     return result;
 }
 
+
 struct PointDescription {
-    double marginal_x;
+	Point p;
+	double marginal_x;
     double marginal_y;
     double values;
 
@@ -73,10 +56,7 @@ std::vector<double> get_cum_value_sweep(std::vector<Point> points) {
     return result;
 }
 
-std::vector<PointDescription> get_cum_value_integral(std::vector<Point> points) {
-    
-}
-inline Point get_rand_point() {
+Point get_rand_point() {
     double x = rand() % 1000000 / 1e6 + 5e-7;
     double y = rand() % 1000000 / 1e6 + 5e-7;
     return Point{.x = gauss_quantile(x), .y = gauss_quantile(y)};
@@ -98,7 +78,12 @@ void test_cdf_integral() {
     auto res = get_cum_value_brute(points);
     auto res2 = get_cum_value_sweep(points);
 
+    auto points2 = points;
+
+    for (int i = 0; i < 100; ++i)
+        points2.push_back(get_rand_point());
+    auto res3 = get_cum_value_sweep_gen(points, points2);
     for (std::size_t i = 0; i < 100; ++i) {
-        std::cout << res[i] << " " << res2[i] << " " << points[i] << "\n";
+        std::cout << res[i] << " " << res2[i]<<" "<<res3[i] << " " << points[i] << "\n";
     }
 }

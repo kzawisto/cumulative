@@ -11,15 +11,21 @@ SRC_TEST := $(shell echo $(SRCS) | tr ' ' '\n' | grep test | tr '\n' ' ')
 OBJS :=  $(SRCS:%.cxx=$(OBJDIR)/%.o)
 
 OBJS_SRC := $(shell echo $(OBJS) | tr ' ' '\n' | grep src | tr '\n' ' ')
-OBJS_TEST := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep test | tr '\n' ' ')
-OBJS_OTHER := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep -v test | tr '\n' ' ')
+OBJS_TEST := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep cpp_tests | tr '\n' ' ')
+OBJS_OTHER := $(shell echo $(OBJS) | tr ' ' '\n' | grep -v src | grep execs | tr '\n' ' ')
 
+BINS = $(OBJS_OTHER:%.o=%.bin)
+
+all: program test_all $(BINS)
+
+%.bin : %.o $(OBJS_SRC)
+	$(CXX) $<  $(OBJS_SRC) $(LDFLAGS) -o $@
 
 program: $(OBJS_OTHER) $(OBJS_SRC)
-	$(CXX) $(OBJS_OTHER)  $(OBJS_SRC) $(LDFLAGS) -o $@
+	$(CXX) $(OBJS_OTHER)  $(OBJS_SRC) $(LDFLAGS) -o $@ 
 
-test.bin :$(OBJS_TEST) $(OBJS_SRC)
-	$(CXX) $(OBJS_TEST)  $(OBJS_SRC) $(LDFLAGS) -o $@
+test_all :$(OBJS_TEST) $(OBJS_SRC)
+	$(CXX) $(OBJS_TEST)  $(OBJS_SRC) $(LDFLAGS) -o $@ -lgtest -lpthread
 
 
 -include $(OBJS:.o=.d)

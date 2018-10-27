@@ -2,7 +2,7 @@
 #include "GenericAVL.h"
 #include <boost/math/special_functions/erf.hpp>
 #include <map>
-#include<cp_tools/cpp_utility.h>
+//#include<cp_tools/cpp_utility.h>
 #include<memory>
 #include<src/cdf_integral.h>
 
@@ -26,7 +26,6 @@ std::map<T , int> get_heights(T root ) {
            stack.push_back(node->L);
         }
         if(node->R) {
-
            m1[node->R] = h+1;
            stack.push_back(node->R);
         }
@@ -45,8 +44,21 @@ inline void test_nodes() {
         std::cout<<it.first->value<<","<<it.second<<"\n";
     }
 }
+inline void test_kolmogorov() {
+    srand(10);
+    std::vector<Point> points, points2;
+    for (int i = 0; i < 100; ++i) {
+        points.push_back(get_rand_point());
+        points2.push_back(get_rand_point());
+    }
+
+    double k1 = kolmogorov_simple(points, points2);
+    double k2 = kolmogorov_incorrect(points, points2);
+    std::cout<<"correct: "<<k1<<" incorrect:"<<k2;
+}
 int main() {
-    test_cdf_integral();
+//    test_cdf_integral();
+	test_kolmogorov();
 }
 
 
