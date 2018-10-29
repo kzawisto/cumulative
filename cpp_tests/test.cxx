@@ -3,8 +3,7 @@
 #include<gtest/gtest.h>
 #include <src/cdf_integral.h>
 #include<iostream>
-#include<cp_tools/cpp_utility.h>
-
+#include<src/tools.h>
 #include <map>
 #include <random>
 #include <cmath>
@@ -19,7 +18,6 @@ TEST(test, test_example) {
 }
 
 
-using namespace cp_tools;
 TEST(test, test_tree_order_should_output_same_elements_as_input) {
 	std::vector<double> vec {1.1, 1.2, 1.3,1.4,1.5,1.5,1.6,1.7, 1.9,2.0};
 
