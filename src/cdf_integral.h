@@ -7,14 +7,8 @@
 #include<map>
 #include<set>
 #include<scalable/scalable.h>
-struct Point {
-    double x, y;
-    friend std::ostream &operator<<(std::ostream &op, Point p) {
-        op << "{x=" << p.x << ", y=" << p.y << "}";
+#include<src/Point.h>
 
-        return op;
-    }
-};
 
 Point get_rand_point();
 

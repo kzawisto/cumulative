@@ -6,6 +6,8 @@
 #include<memory>
 #include<src/cdf_integral.h>
 
+#include<src/ks_stat.h>
+
 struct Node;
 using NodeSP = std::shared_ptr<Node>;
 struct Node {
@@ -45,16 +47,18 @@ inline void test_nodes() {
     }
 }
 inline void test_kolmogorov() {
-    srand(10);
+    srand(11);
     std::vector<Point> points, points2;
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100000; ++i) {
         points.push_back(get_rand_point());
         points2.push_back(get_rand_point());
     }
 
-    double k1 = kolmogorov_simple(points, points2);
+    double k1 = 0;//kolmogorov_simple(points, points2);
     double k2 = kolmogorov_incorrect(points, points2);
-    std::cout<<"correct: "<<k1<<" incorrect:"<<k2;
+	auto kstat = get_kstat_ex(points, points2);
+    double k3 = std::max(std::abs(kstat._max), std::abs(kstat._min));
+    std::cout<<"correct: "<<k1<<" incorrect:"<<k2<<" bst:" <<k3;
 }
 int main() {
 //    test_cdf_integral();

@@ -83,7 +83,4 @@ void test_cdf_integral() {
     for (int i = 0; i < 100; ++i)
         points2.push_back(get_rand_point());
     auto res3 = get_cum_value_sweep_gen(points, points2);
-    for (std::size_t i = 0; i < 100; ++i) {
-        std::cout << res[i] << " " << res2[i]<<" "<<res3[i] << " " << points[i] << "\n";
-    }
 }
