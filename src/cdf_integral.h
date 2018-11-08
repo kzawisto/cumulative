@@ -8,10 +8,12 @@
 #include<set>
 #include<scalable/scalable.h>
 #include<src/Point.h>
-
+#include <boost/math/special_functions/erf.hpp>
 
 Point get_rand_point();
-
+inline double gauss_quantile(double q) {
+    return -sqrt(2) * boost::math::erfc_inv(2 * q);
+}
 struct PointOrderByX {
     bool operator()(Point a, Point b) {
         return a.x < b.x or (a.x == b.x and a.y < b.y);

@@ -1,5 +1,5 @@
 
-CFLAGS := -std=c++14 -I. -g -O2
+CFLAGS := -std=c++14 -I. -g -O0
 CXX := g++
 LDFLAGS := -g
 ALL_FILES = $(shell find . \( -name "*.h" -or -name *.cxx \) -exec ls {} \;)
@@ -35,7 +35,7 @@ $(OBJDIR)/%.o: %.cxx
 	echo $(SRC_TEST)
 	@mkdir -p `dirname $@`
 	$(CXX) -c $(CFLAGS) $< -o $@
-	$(CXX) -MM $(CFLAGS) $*.cxx | sed "s:^:`dirname $@`/:" > $(OBJDIR)/$*.d
+	$(CXX) -MM $(CFLAGS) $*.cxx | sed "1s:^:`dirname $@`/:" > $(OBJDIR)/$*.d
 
 
 .PHONY: clang-format clean clang-tidy

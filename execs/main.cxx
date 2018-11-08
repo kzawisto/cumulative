@@ -49,12 +49,11 @@ inline void test_nodes() {
 inline void test_kolmogorov() {
     srand(11);
     std::vector<Point> points, points2;
-    for (int i = 0; i < 100000; ++i) {
+    for (int i = 0; i < 1000; ++i) {
         points.push_back(get_rand_point());
         points2.push_back(get_rand_point());
     }
-
-    double k1 = 0;//kolmogorov_simple(points, points2);
+    double k1 = kolmogorov_simple(points, points2);
     double k2 = kolmogorov_incorrect(points, points2);
 	auto kstat = get_kstat_ex(points, points2);
     double k3 = std::max(std::abs(kstat._max), std::abs(kstat._min));

@@ -83,6 +83,21 @@ static std::vector<double> tree_order(std::vector<double> sorted_vector) {
 
 }
 };
+inline
+void set_max_and_loc(double & old_max, double & old_loc, double max_candidate, double candicate_loc) {
+	if(old_max < max_candidate) {
+		old_max = max_candidate;
+		old_loc = candicate_loc;
+	}
+}
+
+inline
+void set_min_and_loc(double & old_min, double & old_loc, double min_candidate, double candicate_loc) {
+	if(old_min > min_candidate) {
+		old_min = min_candidate;
+		old_loc = candicate_loc;
+	}
+}
 struct CumulativeTree {
 
 	Comparator comparator;
@@ -90,42 +105,60 @@ struct CumulativeTree {
 	using ValueType = double;
     struct Node {
         Node *L=nullptr, *R=nullptr;
-        Node * father = nullptr;
         KeyType key;
         ValueType value=0;
-        int h;
         int counter = 1;
 
-        int childrenCount;
         double sum_of_vals = 0;
         double cum_max = 0;
         double cum_min = 0;
+        double loc_max=0;
+        double loc_min=0;
 
         double cum_right_offset = 0;
         Node(KeyType key, ValueType value)
-            : L(nullptr), R(nullptr), key(key), value(value), h(1), childrenCount(0) {}
+            : L(nullptr), R(nullptr), key(key), value(value) {}
+
+        Node(const Node &n){
+        	L = nullptr;
+        	R = nullptr;
+        	key = n.key;
+        	value = n.value;
+        	counter = n.counter;
+			sum_of_vals = n.sum_of_vals;
+			cum_max = n.cum_max;
+			cum_min = n.cum_min;
+			loc_max= n.loc_max;
+			loc_min= n.loc_min;
+			cum_right_offset = n.cum_right_offset;
+        }
     };
 
-    static int getH(Node *n) {
-        if (!n)
-            return 0;
-        else
-            return n->h;
-    }
-    static void set_cum_max_min(Node *n) {
-    	n->cum_max = n->cum_right_offset;
-    	n->cum_min = n->cum_right_offset;
-    	if(n->L) {
-    		n->cum_max = std::max(n->cum_max, n->L->cum_max);
-    		n->cum_min = std::min(n->cum_min, n->L->cum_min);
-    	}
-    	if(n->R) {
-    		n->cum_max = std::max(n->cum_max, n->cum_right_offset + n->R->cum_max);
-    		n->cum_min = std::min(n->cum_min, n->cum_right_offset + n->R->cum_min);
-    	}
+    static Node * copyNode(const Node * n) {
+    	if(not n)
+    		return nullptr;
+    	Node * copied_n = new Node(*n);
+    	copied_n->L = copyNode(n->L);
+    	copied_n->R = copyNode(n->R);
+    	return copied_n;
     }
   public:
     Node *root=nullptr;
+    CumulativeTree() {
+
+    }
+
+    CumulativeTree(const CumulativeTree & tree) {
+    	root = copyNode(tree.root);
+
+    	std::cerr<<"copy ";
+    }
+
+    CumulativeTree(CumulativeTree && tree) {
+    	root = tree.root;
+    	tree.root = nullptr;
+    	std::cerr<<"move ";
+    }
 
     Node *insertNode(Node *n, KeyType key, double value) {
         if (!n)
@@ -166,6 +199,33 @@ struct CumulativeTree {
 
     	}
     }
+    static double query_upper_bound_impl(Node * n, double value, double offset) {
+
+
+		double v=  n->value + offset;
+    	if(value < n->key) {
+    		if(n->L) {
+    			return query_upper_bound_impl(n->L, value, offset);
+    		} else return offset;
+    	}
+    	if(n->L) {
+			v+= n->L->sum_of_vals;
+    	}
+    	if(value > n->key) {
+
+    		if(n->R) {
+    			return query_upper_bound_impl(n->R, value, v);
+    		} else {
+    			return v;
+    		}
+    	}
+
+   		return v;
+    }
+    double query_upper_bound(double value) {
+    	return query_upper_bound_impl(root, value, 0);
+    }
+
     static ValueType inorder_transversal_set_cumsum(Node * n, double offset) {
     	if(n) {
     		double cum_left = inorder_transversal_set_cumsum(n->L, offset);
@@ -183,23 +243,19 @@ struct CumulativeTree {
 			n->cum_min = 1e+9;
 			double offset= n->value;
 			if(not n->L) {
-				n->cum_max = std::max(n->cum_max, n->value);
-
-				n->cum_min = std::min(n->cum_min, n->value);
+				set_max_and_loc(n->cum_max, n->loc_max, n->value, n->key);
+				set_min_and_loc(n->cum_min, n->loc_min, n->value, n->key);
 			}
-    		if(n->L) {
+			else {
     			offset = n->value + n->L->sum_of_vals;
-				n->cum_max = std::max(n->cum_max, offset);
-
-				n->cum_min = std::min(n->cum_min, offset);
-
-				n->cum_max = std::max(n->cum_max, n->L->cum_max);
-
-				n->cum_min = std::min(n->cum_min, n->L->cum_min);
+				set_max_and_loc(n->cum_max, n->loc_max, offset , n->key);
+				set_min_and_loc(n->cum_min, n->loc_min, offset, n->key);
+				set_max_and_loc(n->cum_max, n->loc_max, n->L->cum_max, n->L->loc_max);
+				set_min_and_loc(n->cum_min, n->loc_min, n->L->cum_min, n->L->loc_min);
     		}
     		if(n->R) {
-				n->cum_max = std::max(n->cum_max, offset + n->R->cum_max);
-				n->cum_min = std::min(n->cum_min, offset + n->R->cum_min);
+				set_max_and_loc(n->cum_max, n->loc_max, offset + n->R->cum_max, n->R->loc_max);
+				set_min_and_loc(n->cum_min, n->loc_min, offset + n->R->cum_min, n->R->loc_min);
     		}
     }
 
@@ -246,12 +302,20 @@ struct CumulativeTree {
     }
     void delete_val(KeyType key, ValueType value) {
     	delete_val_impl(root, key, value);
-
     }
 };
 
-
-
+template<typename T>
+CumulativeTree build_cumulative_tree(T indices, T values) {
+	CumulativeTree tree;
+	auto order_vec = TreeOrder::tree_order_indices({0, values.size()-1});
+	for(auto a: order_vec) {
+		tree.insert(indices[a], values[a]);
+	}
+	CumulativeTree::inorder_transversal_set_cumsum(tree.root,0);
+	CumulativeTree::transversal_set_extrema(tree.root);
+	return tree;
+}
 
 
 #endif /* SRC_STATIC_CUMULATIVE_TREE_H_ */

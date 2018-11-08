@@ -1,12 +1,9 @@
 
 #include "src/GenericAVL.h"
 #include<src/cdf_integral.h>
-#include <boost/math/special_functions/erf.hpp>
 #include<src/cdf_integral.h>
 #include <map>
-inline double gauss_quantile(double q) {
-    return -sqrt(2) * boost::math::erfc_inv(2 * q);
-}
+
 
 std::vector<double> get_cum_value_brute(std::vector<Point> points) {
     std::vector<double> result;

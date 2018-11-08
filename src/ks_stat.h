@@ -25,12 +25,23 @@ void fill_tree(const vecd & x_coordinates_sorted, const vecd & values) {
 
 struct MaxMin {
 	double _max=-1e9, _min=1e9;
-	void aggregate_max(double max_candidate){
-		_max = std::max(_max, max_candidate);
+	double max_loc_y = -1, max_loc_x = -1;
+	double min_loc_y = -1, min_loc_x = -1;
+
+	void aggregate_max(double max_candidate, double loc_x_new, double loc_y_new){
+		if(_max < max_candidate) {
+			_max = max_candidate;
+			max_loc_x = loc_x_new;
+			max_loc_y = loc_y_new;
+		}
 	}
 
-	void aggregate_min(double min_candidate){
-		_min = std::min(_min, min_candidate);
+	void aggregate_min(double min_candidate, double loc_x_new, double loc_y_new){
+		if(_min > min_candidate) {
+			_min = min_candidate;
+			max_loc_x = loc_x_new;
+			min_loc_y = loc_y_new;
+		}
 	}
 };
 
@@ -71,12 +82,12 @@ MaxMin get_kstat(const vecd & x_s1,const vecd & y_s1, const vecd & x_s2,const ve
 	std::stable_sort(indices_by_y.begin(), indices_by_y.end(), [&all_y](long i, long j) {return all_y[i] < all_y[j];});
 
 	MaxMin mm;
-	mm.aggregate_max(tree.root->cum_max);
-	mm.aggregate_min(tree.root->cum_min);
+	mm.aggregate_max(tree.root->cum_max, 0, 0);
+	mm.aggregate_min(tree.root->cum_min, 0, 0);
 	for(int i = indices_by_y.size() - 1; i >= 0;--i) {
 		tree.delete_val(all_x[indices_by_y[i]], all_vals[indices_by_y[i]]);
-		mm.aggregate_max(tree.root->cum_max);
-		mm.aggregate_min(tree.root->cum_min);
+		mm.aggregate_max(tree.root->cum_max, 0, 0);
+		mm.aggregate_min(tree.root->cum_min, 0, 0);
 
 	}
 

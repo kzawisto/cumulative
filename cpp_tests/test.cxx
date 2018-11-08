@@ -53,6 +53,27 @@ TEST(test, test_insert_into_tree) {
 	ASSERT_EQ(tree.root->cum_max, 1.01);
 	ASSERT_NEAR(tree.root->cum_min, -4.8991, 1e-5);
 }
+double search_cum_value_naive(std::vector<double> x, std::vector<double> y, double x_value) {
+	auto i = std::upper_bound(x.begin(), x.end(), x_value) - x.begin();
+	if(i!=0) i--;
+	return y[i];
+}
+TEST(test, test_cumsum_lookup) {
+
+
+	std::vector<double> vec {1.1, 1.2, 1.3,1.4,1.5,1.51,1.6,1.7, 1.9,2.0};
+	std::vector<double> values {1.01, -1.03, -1.04, -1.06, 1.001,  1.04,-1.09,-1.19,-1.0001,-1.54};
+	std::vector<double> cumsum = get_cumsum(values);
+	std::cout<<search_cum_value_naive(vec, cumsum, 1.2);
+
+	CumulativeTree tree = build_cumulative_tree(vec, values);
+	for(int i =0; i < cumsum.size();++i) {
+		ASSERT_NEAR(cumsum[i],tree.query_upper_bound(vec[i]),1e-8);
+		ASSERT_NEAR(cumsum[i],tree.query_upper_bound(vec[i]+1e-5),1e-8);
+	}
+
+
+}
 
 
 
