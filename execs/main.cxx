@@ -58,6 +58,9 @@ inline void test_kolmogorov() {
 	auto kstat = get_kstat_ex(points, points2);
     double k3 = std::max(std::abs(kstat._max), std::abs(kstat._min));
     std::cout<<"correct: "<<k1<<" incorrect:"<<k2<<" bst:" <<k3;
+    std::cout<<"\n"<<kstat.max_loc_x<<" "<<kstat.max_loc_y<<"\n";
+    std::cout<<"\n"<<kstat.min_loc_x<<" "<<kstat.min_loc_y<<"\n";
+    std::cout<<"\n"<<kstat._max<<" "<<kstat._min<<"\n";
 }
 int main() {
 //    test_cdf_integral();

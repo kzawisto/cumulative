@@ -14,6 +14,7 @@
 #include<src/static_cumulative_tree.h>
 #include<algorithm>
 #include<src/Point.h>
+#include <type_traits>
 
 void fill_tree(const vecd & x_coordinates_sorted, const vecd & values) {
 	CumulativeTree tree;
@@ -45,6 +46,11 @@ struct MaxMin {
 	}
 };
 
+template<typename T>
+auto rev_at(T & container, decltype(std::declval<T>().size()) idx)-> decltype(std::declval<T>().at(0)){
+	return container.at(container.size() - idx);
+
+}
 inline
 MaxMin get_kstat(const vecd & x_s1,const vecd & y_s1, const vecd & x_s2,const vecd & y_s2) {
 	if(x_s1.size() != y_s1.size()) throw std::logic_error("s1 sample dimmensions do not match");
@@ -82,12 +88,13 @@ MaxMin get_kstat(const vecd & x_s1,const vecd & y_s1, const vecd & x_s2,const ve
 	std::stable_sort(indices_by_y.begin(), indices_by_y.end(), [&all_y](long i, long j) {return all_y[i] < all_y[j];});
 
 	MaxMin mm;
-	mm.aggregate_max(tree.root->cum_max, 0, 0);
-	mm.aggregate_min(tree.root->cum_min, 0, 0);
+	mm.aggregate_max(tree.root->cum_max, tree.root->loc_max, all_y[rev_at(indices_by_y,1)]);
+	mm.aggregate_min(tree.root->cum_min, tree.root->loc_min, all_y[rev_at(indices_by_y,1)]);
 	for(int i = indices_by_y.size() - 1; i >= 0;--i) {
-		tree.delete_val(all_x[indices_by_y[i]], all_vals[indices_by_y[i]]);
-		mm.aggregate_max(tree.root->cum_max, 0, 0);
-		mm.aggregate_min(tree.root->cum_min, 0, 0);
+		auto idx = indices_by_y[i];
+		tree.delete_val(all_x[idx], all_vals[idx]);
+		mm.aggregate_max(tree.root->cum_max, tree.root->loc_max, all_y[idx]);
+		mm.aggregate_min(tree.root->cum_min, tree.root->loc_min, all_y[idx]);
 
 	}
 
@@ -110,6 +117,15 @@ inline MaxMin get_kstat_ex(const std::vector<Point> & s1, const std::vector<Poin
 		y_s2.push_back(p.y);
 	}
 	return get_kstat(x_s1, y_s1, x_s2, y_s2);
+}
+inline std::vector<double> query_vals(
+		std::vector<double> vec_X_vals,
+		std::vector<double> vec_Y_vals,
+		std::vector<double> vec_vals,
+		std::vector<double> vec_X_evaluation,
+		std::vector<double> vec_Y_evaluation
+) {
+
 }
 
 
