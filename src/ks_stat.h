@@ -40,7 +40,7 @@ struct MaxMin {
 	void aggregate_min(double min_candidate, double loc_x_new, double loc_y_new){
 		if(_min > min_candidate) {
 			_min = min_candidate;
-			max_loc_x = loc_x_new;
+			min_loc_x = loc_x_new;
 			min_loc_y = loc_y_new;
 		}
 	}

@@ -33,6 +33,10 @@ PyObject * ks_test(PyObject * x1, PyObject * y1, PyObject * x2, PyObject * y2) {
 	PyObject *d = PyDict_New();
 	PyDict_SetItemString(d, "max", PyFloat_FromDouble(result._max));
 	PyDict_SetItemString(d, "min", PyFloat_FromDouble(result._min));
+	PyDict_SetItemString(d, "max_loc_y", PyFloat_FromDouble(result.max_loc_y));
+	PyDict_SetItemString(d, "max_loc_x", PyFloat_FromDouble(result.max_loc_x));
+	PyDict_SetItemString(d, "min_loc_y", PyFloat_FromDouble(result.min_loc_y));
+	PyDict_SetItemString(d, "min_loc_x", PyFloat_FromDouble(result.min_loc_x));
 	return d;
 }
 
