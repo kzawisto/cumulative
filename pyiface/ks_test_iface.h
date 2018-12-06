@@ -24,7 +24,7 @@ PyObject * ks_test(PyObject * x1, PyObject * y1, PyObject * x2, PyObject * y2) {
 		vec_x1.push_back(view_x1.at(i));
 		vec_y1.push_back(view_y1.at(i));
 	}
-	for(long i = 0;i < view_x1.size(); i++) {
+	for(long i = 0;i < view_x2.size(); i++) {
 		vec_x2.push_back(view_x2.at(i));
 		vec_y2.push_back(view_y2.at(i));
 	}
