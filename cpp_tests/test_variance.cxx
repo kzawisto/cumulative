@@ -39,7 +39,6 @@ SplineTree populate_tree(std::vector<double> features, std::vector<double> respo
 inline
 std::vector<MeanAndVariance<double>>
 evaluate_mean_var_2d(std::vector<double> featuresX, std::vector<double> featuresY, std::vector<double> response) {
-
 	auto spline_tree = populate_tree(featuresX, response);
 	IdxSort ord_by_y(featuresY);
 	std::vector<MeanAndVariance<double>> results_all(featuresY);
@@ -61,12 +60,11 @@ evaluate_mean_var_2d_naive(std::vector<double> f1, std::vector<double> f2, std::
 	for(size_t i=0;i< f1.size();++i) {
 		std::vector<double> chosen_values;
 		for(size_t j =0;j < f1.size(); ++j) {
-			if(f1[j]>= f1[i] and f2[j]>= f2[i]){
+			if(f1[j]>= f1[i] and f2[j]>= f2[i]) {
 				chosen_values.push_back(response[j]);
 			}
 		}
 		results[i] = get_mean_and_variance(chosen_values.begin(), chosen_values.end());
-
 	}
 	return results;
 
