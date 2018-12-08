@@ -14,6 +14,8 @@
 #include<boost/optional.hpp>
 #include<utility>
 #include<deque>
+#include<src/tree_primitives.h>
+
 
 struct Comparator {
 	bool operator() (double i , double j) const {
@@ -98,6 +100,7 @@ void set_min_and_loc(double & old_min, double & old_loc, double min_candidate, d
 		old_loc = candicate_loc;
 	}
 }
+
 struct CumulativeTree {
 
 	Comparator comparator;
@@ -132,16 +135,12 @@ struct CumulativeTree {
 			loc_min= n.loc_min;
 			cum_right_offset = n.cum_right_offset;
         }
+        void accept_extra_value(KeyType key, ValueType v) {
+        	value += v;
+        	counter ++;
+        }
     };
 
-    static Node * copyNode(const Node * n) {
-    	if(not n)
-    		return nullptr;
-    	Node * copied_n = new Node(*n);
-    	copied_n->L = copyNode(n->L);
-    	copied_n->R = copyNode(n->R);
-    	return copied_n;
-    }
   public:
     Node *root=nullptr;
     CumulativeTree() {
@@ -149,7 +148,7 @@ struct CumulativeTree {
     }
 
     CumulativeTree(const CumulativeTree & tree) {
-    	root = copyNode(tree.root);
+    	root = copy_node(tree.root);
 
     	std::cerr<<"copy ";
     }
@@ -159,6 +158,7 @@ struct CumulativeTree {
     	tree.root = nullptr;
     	std::cerr<<"move ";
     }
+
 
     Node *insertNode(Node *n, KeyType key, double value) {
         if (!n)
@@ -179,17 +179,10 @@ struct CumulativeTree {
     }
     void insert(double key, double value) {
     	root = insertNode(root, key, value);
+    }
 
-    }
-    static void dealloc(Node * node) {
-    	if(node) {
-    		dealloc(node->L);
-    		dealloc(node->R);
-    		delete(node);
-    	}
-    }
     ~CumulativeTree () {
-    	dealloc(root);
+    	dealloc_node(root);
     }
     static void inorder_transversal(Node * n) {
     	if(n) {
@@ -259,30 +252,11 @@ struct CumulativeTree {
     		}
     }
 
-    template<typename Executor>
-    static void bfs_transversal(Node *n, Executor & exec) {
-    	if(n) {
-
-    		exec(n);
-    		bfs_transversal(n->L, exec);
-    		bfs_transversal(n->R, exec);
-    	}
-
-    }
-    template<typename Executor>
-    static void dfs_transversal(Node *n, Executor & exec) {
-    	if(n) {
-
-    		dfs_transversal(n->L, exec);
-    		dfs_transversal(n->R, exec);
-    		exec(n);
-    	}
-
-    }
     static void transversal_set_extrema(Node * n) {
     	auto visitor = [] (Node * n){reset_extrema(n);};
     	dfs_transversal(n, visitor);
     }
+
     void delete_val_impl(Node *n, KeyType key, ValueType value) const {
     	if(n) {
     	   if (comparator(key, n->key)) {
@@ -300,6 +274,7 @@ struct CumulativeTree {
     	   reset_extrema(n);
     	}
     }
+
     void delete_val(KeyType key, ValueType value) {
     	delete_val_impl(root, key, value);
     }
