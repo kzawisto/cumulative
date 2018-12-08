@@ -103,17 +103,8 @@ TEST(test, two_dim_lookup) {
 		featuresY.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
 	}
 
-	auto spline_tree = populate_tree(featuresX, response);
-	IdxSort ord_by_y(featuresY);
-	std::vector<MeanAndVariance<double>> results_all(featuresY);
-	auto featuresX_ord_Y = ord_by_y.reorder(featuresX);
-	auto featuresY_ord_Y = ord_by_y.reorder(featuresY);
-	auto response_ord_y = ord_by_y.reorder(response);
-	for(std::size_t i = 0;i < featuresY.size();i--) {
-		results_all[i] = spline_tree.query_var_above_or_eq(featuresX_ord_Y[i]);
-		spline_tree.delete_val(featuresX_ord_Y[i], response_ord_y[i]);
-	}
-	ord_by_y.unreorder(results_all);
+	auto result1 = evaluate_mean_var_2d(featuresX, featuresY, response);
+	auto result2 = evaluate_mean_var_2d(featuresX, featuresY, response);
 
 	//response = s_features.reorder(response);
 }
