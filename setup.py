@@ -21,6 +21,6 @@ setup(
     license="prop.",
     ext_modules=cythonize(Extension(
         "ks2d.ext", include_dirs = ["."],sources=["pyiface/ext.pyx"] + matches,language="c++",
-        extra_compile_args=["-std=c++17","-g","-O2"], extra_link_args=["-std=c++17","-g","-O2","-lstdc++"]
+        extra_compile_args=["-std=c++14","-g","-O2"], extra_link_args=["-std=c++14","-g","-O2","-lstdc++"]
         ))
     )
