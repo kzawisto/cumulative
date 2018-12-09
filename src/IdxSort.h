@@ -12,20 +12,25 @@
 
 struct IdxSort {
 
-	std::vector<long> indices;
-	IdxSort(std::vector<double> & v) : indices(v.size()){
+	std::vector<long> indices, indices_inverse;
+	IdxSort(const std::vector<double> & v) : indices(v.size()), indices_inverse(v.size()){
 		for(std::size_t i  =0 ;i < v.size();++i) {
 			indices[i]= i;
 		}
-		std::sort(indices.begin(), indices.end(),[v] (long i, long j) {
-			return v[i] < v[j];
+		auto v1 = v;
+		std::sort(indices.begin(), indices.end(),[&v1] (long i, long j) {
+			return v1[i] < v1[j];
 		});
+
+		for(std::size_t i  =0 ;i < v.size();++i) {
+			indices_inverse[indices[i]] =i;
+		}
 	}
 	template<typename T>
 	std::vector<T> reorder(const std::vector<T> & v) {
 		std::vector<T> v1(v.size());
 		for(std::size_t i  =0 ;i < v.size();++i) {
-			v1[indices[i]] = v[i];
+			v1[i] = v[indices[i]];
 		}
 		return v1;
 	}
@@ -34,7 +39,7 @@ struct IdxSort {
 
 		std::vector<T> v1(v.size());
 		for(std::size_t i  =0 ;i < v.size();++i) {
-			v1[i] = v[indices[i]];
+			v1[indices[i]] = v[i];
 		}
 		return v1;
 	}

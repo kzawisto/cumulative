@@ -1,7 +1,7 @@
 
-CFLAGS := -std=c++14 -I. -g -O0 -fsanitize=undefined
+CFLAGS := -std=c++14 -I. -g -O0 
 CXX ?= g++
-LDFLAGS := -g -fsanitize=undefined
+LDFLAGS := -g 
 ALL_FILES = $(shell find . \( -name "*.h" -or -name *.cxx \) -exec ls {} \;)
 SRCS := $(shell find . -name '*.cxx' | sed 's:^\./::g')
 

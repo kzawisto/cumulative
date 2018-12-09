@@ -8,67 +8,7 @@
 
 
 #include<gtest/gtest.h>
-#include<cp_tools/numeric_utility.h>
-#include<cp_tools/ostream_ops.h>
-#include <src/IdxSort.h>
-#include <src/SplineTree.h>
-#include<eigen3/Eigen/Dense>
-
-#include "src/cdf_integral.h"
-#include "src/static_cumulative_tree.h"
-#include "src/tree_primitives.h"
-
-using namespace cp_tools;
-
-using std::size_t;
-
-inline
-SplineTree populate_tree(std::vector<double> features, std::vector<double> response) {
-
-	IdxSort s_features(features);
-	features = s_features.reorder(features);
-	response = s_features.reorder(response);
-	auto order_vec = TreeOrder::tree_order_indices({0, features.size()});
-	SplineTree tr;
-	for(auto a: order_vec) {
-		tr.insert(features[a], response[a]);
-	}
-	tr.set_mean_var_values();
-	return tr;
-}
-inline
-std::vector<MeanAndVariance<double>>
-evaluate_mean_var_2d(std::vector<double> featuresX, std::vector<double> featuresY, std::vector<double> response) {
-	auto spline_tree = populate_tree(featuresX, response);
-	IdxSort ord_by_y(featuresY);
-	std::vector<MeanAndVariance<double>> results_all(featuresY);
-	auto featuresX_ord_Y = ord_by_y.reorder(featuresX);
-	auto featuresY_ord_Y = ord_by_y.reorder(featuresY);
-	auto response_ord_y = ord_by_y.reorder(response);
-	for(std::size_t i = 0;i < featuresY.size();i--) {
-		results_all[i] = spline_tree.query_var_above_or_eq(featuresX_ord_Y[i]);
-		spline_tree.delete_val(featuresX_ord_Y[i], response_ord_y[i]);
-	}
-	return ord_by_y.unreorder(results_all);
-}
-
-inline
-std::vector<MeanAndVariance<double>>
-evaluate_mean_var_2d_naive(std::vector<double> f1, std::vector<double> f2, std::vector<double> response) {
-
-	std::vector<MeanAndVariance<double>> results(f1.size());
-	for(size_t i=0;i< f1.size();++i) {
-		std::vector<double> chosen_values;
-		for(size_t j =0;j < f1.size(); ++j) {
-			if(f1[j]>= f1[i] and f2[j]>= f2[i]) {
-				chosen_values.push_back(response[j]);
-			}
-		}
-		results[i] = get_mean_and_variance(chosen_values.begin(), chosen_values.end());
-	}
-	return results;
-
-}
+#include <src/evaluate_mean_var_2d.h>
 
 TEST(test, spline_tree) {
 
@@ -88,8 +28,12 @@ TEST(test, spline_tree) {
 		tr.insert(features[a], response[a]);
 	}
 	tr.set_mean_var_values();
-	std::cout<<tr.query_var_above_or_eq(400)<<"\n";
-	std::cout<<get_mean_and_variance(response.begin() + 400, response.end())<<"\n";
+	auto one = tr.query_var_above_or_eq(400);
+	auto other = get_mean_and_variance(response.begin() + 400, response.end());
+	ASSERT_TRUE(one == other);
+}
+double gaus_var() {
+	return gauss_quantile(rand() % 1000000  / 1000000.0);
 }
 TEST(test, two_dim_lookup) {
 
@@ -98,14 +42,28 @@ TEST(test, two_dim_lookup) {
 	std::vector<double> response ;
 	srand(10);
 	for(int i =0;i <1000;++i) {
-		featuresX.push_back(i);
+		featuresX.push_back(gaus_var());
 		response.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
 		featuresY.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
 	}
 
-	auto result1 = evaluate_mean_var_2d(featuresX, featuresY, response);
-	auto result2 = evaluate_mean_var_2d(featuresX, featuresY, response);
+	auto result1 = evaluate_mean_var_2d(featuresY, featuresX, response);
+	auto result2 = evaluate_mean_var_2d_naive(featuresY, featuresX, response);
 
+/*	std::sort(result1.begin(), result1.end(), [](auto a, auto b) {
+		return a.mean<b.mean;
+	});
+	std::sort(result2.begin(), result2.end(), [](auto a, auto b) {
+		return a.mean<b.mean;
+	});*/
+	for(size_t i =0;i < result1.size();++i) {
+		ASSERT_EQ(result1[i],result2[i]);
+	}
+	std::cout<<"\n";
+	std::cout<<result1[0]<<result2[0]<<"\n";
+	std::cout<<result1[1]<<result2[1]<<"\n";
+	std::cout<<result1[2]<<result2[2]<<"\n";
+	std::cout<<result1[3]<<result2[3]<<"\n";
 	//response = s_features.reorder(response);
 }
 TEST(test, combined_variance) {
@@ -132,12 +90,65 @@ TEST(test, combined_variance) {
 
 };
 
-TEST(test, idx_sort) {
+TEST(test, idx_sort_reorder) {
 	std::vector<double> vec {1,5,3,2,8,7};
 	IdxSort s(vec);
 	auto vec2 = s.reorder(vec);
 	auto expected = std::vector<double>{ 1,2,3,5,7,8};
 	ASSERT_EQ(expected, vec2);
-
 }
 
+
+TEST(test, idx_sort_unreorder) {
+	std::vector<double> vec {1,5,3,2,8,7};
+	IdxSort s(vec);
+	auto vec2 = s.unreorder(s.reorder(vec));
+	auto expected = std::vector<double>{ 1,2,3,5,7,8};
+	ASSERT_EQ(vec2, vec);
+}
+
+TEST(test, idx_sort_large) {
+	std::vector<double> vec;
+	srand(15);
+	for(size_t i = 0;i < 10000;++i) {
+		vec.push_back(gaus_var());
+	}
+	IdxSort s(vec);
+	auto vec2 = s.reorder(vec);
+	for(size_t i =0;i < vec.size()-1;++i) {
+		ASSERT_LE(vec2[i], vec2[i+1]);
+	}
+	ASSERT_EQ(s.unreorder(vec2), vec);
+}
+
+TEST(test, spline_tree_value_removal) {
+
+
+	std::vector<double> features ;
+	std::vector<double> response ;
+	srand(10);
+	for(int i =0;i <1000;++i) {
+		features.push_back(i);
+		response.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+	}
+	IdxSort s_features(features);
+	features = s_features.reorder(features);
+	response = s_features.reorder(response);
+	auto order_vec = TreeOrder::tree_order_indices({0, 1000});
+	SplineTree tr;
+	for(auto a: order_vec) {
+		tr.insert(features[a], response[a]);
+	}
+	tr.set_mean_var_values();
+	auto one = tr.query_var_above_or_eq(400);
+	auto other = get_mean_and_variance(response.begin() + 400, response.end());
+	tr.delete_val(features[550], response[550]);
+	tr.delete_val(features[551], response[551]);
+	tr.delete_val(features[552], response[552]);
+	auto one1 = tr.query_var_above_or_eq(400);
+	response.erase(response.begin()+550);
+	response.erase(response.begin()+550);
+	response.erase(response.begin()+550);
+	auto other1 = get_mean_and_variance(response.begin() + 400, response.end());
+	ASSERT_TRUE(one1 ==other1);
+}
