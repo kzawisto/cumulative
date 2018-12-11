@@ -16,6 +16,7 @@
 #include "src/cdf_integral.h"
 #include "src/static_cumulative_tree.h"
 #include "src/tree_primitives.h"
+#include<algorithm>
 #include<cmath>
 
 using namespace cp_tools;
@@ -68,6 +69,7 @@ evaluate_mean_var_2d(std::vector<double> featuresX, std::vector<double> features
 	return ord_by_y.unreorder(results_all);
 }
 
+
 inline
 std::vector<MeanAndVariance<double>>
 evaluate_mean_var_2d_naive(std::vector<double> f1, std::vector<double> f2, std::vector<double> response) {
@@ -93,6 +95,12 @@ struct OptimalSpline {
 	MeanAndVariance<double> selection, remainder;
 	double X, Y, loglik;
 	long idx;
+	friend std::ostream & operator<<(std::ostream & os, OptimalSpline s) {
+		os <<"OptimalSpline{"<<"selection:"<<s.selection<<", remainder:"<<
+				s.remainder<<", X:"<<s.X<<", Y:"<<s.Y<<", loglik:"<<s.loglik<<"}\n";
+		return os;
+	}
+
 };
 
 double evaluate_spline_loglik(MeanAndVariance<double>total_mv, MeanAndVariance<double> spline_mv) {
@@ -114,7 +122,6 @@ get_optimal_spline(std::vector<double> featuresX, std::vector<double> featuresY,
 			max = loglik; idx = i;
 		}
 	}
-
 	OptimalSpline s;
 
 	s.selection = results[idx];
@@ -124,8 +131,119 @@ get_optimal_spline(std::vector<double> featuresX, std::vector<double> featuresY,
 	s.idx = idx;
 	s.loglik = max;
 	return s;
-
 }
+
+struct MeanVar2dEvaluator {
+	long sweep_position = 0;
+	std::vector<double > featuresX_ord_Y, featuresY_ord_Y, response_ord_y;
+	std::vector<double> featuresX_ord_X;
+	MeanAndVariance<double> total_var;
+	SplineTree spline_tree;
+	long stride_lim=1000;
+	long stride_decr=5;
+	MeanVar2dEvaluator(std::vector<double> featuresX, std::vector<double> featuresY, std::vector<double> response) {
+		IdxSort ord_by_y(featuresY);
+		IdxSort ord_by_x(featuresX);
+		std::vector<MeanAndVariance<double>> results_all(featuresY.size());
+		 featuresX_ord_Y = ord_by_y.reorder(featuresX);
+		 featuresX_ord_X = ord_by_x.reorder(featuresX);
+		 featuresY_ord_Y = ord_by_y.reorder(featuresY);
+		 response_ord_y = ord_by_y.reorder(response);
+		 spline_tree = populate_tree(featuresX_ord_Y, response_ord_y);
+		 total_var = get_mean_and_variance(response.begin(), response.end());
+	}
+	void sweep_forward() {
+		spline_tree.delete_val(featuresX_ord_Y[sweep_position], response_ord_y[sweep_position]);
+		sweep_position++;
+	}
+	void sweep_backward() {
+		sweep_position--;
+		spline_tree.insert_val(featuresX_ord_Y[sweep_position], response_ord_y[sweep_position]);
+	}
+	MeanAndVariance<double> evaluate_at_indices(long idx_x, long idx_y) {
+		assert(idx_y == sweep_position);
+		return spline_tree.query_var_above_or_eq(featuresX_ord_X[idx_x]);
+	}
+	std::pair<long, long> evaluate_at_positions(std::vector<long> X_indices, std::vector<long> Y_indices) {
+
+		IdxSort ord_by_y(Y_indices);
+		auto y_sorted = ord_by_y.reorder(Y_indices);
+		auto x_sorted = ord_by_y.reorder(X_indices);
+		long i_max = -1;
+		double loglik_max = -1e9;
+		while(y_sorted[0]< sweep_position) {
+			sweep_backward();
+		}
+		for(size_t i = 0;i < Y_indices.size();++i) {
+			while(y_sorted[0]< sweep_position) {
+				sweep_backward();
+			}
+			while(y_sorted[i]> sweep_position) {
+				sweep_forward();
+			}
+
+			auto res = evaluate_at_indices(x_sorted[i], y_sorted[i]);
+			auto loglik = evaluate_spline_loglik(total_var, res);
+			std::cout<<loglik<<" ";
+			if(loglik > loglik_max) {
+				loglik_max=loglik;
+				i_max = i;
+			}
+		}
+		std::cout<<"\nchosen:"<<x_sorted[i_max]<<" "<< y_sorted[i_max]<<"\n";
+
+		return {x_sorted[i_max], y_sorted[i_max]};
+	}
+	std::vector<long> get_n_indices(long fr, long to, long stride) {
+		std::vector<long> vec;
+		for(long i =fr;i < to-1;i+= stride) {
+			vec.push_back(i);
+		}
+		vec.push_back(to-1);
+		return vec;
+	}
+	OptimalSpline run_optim() {
+		auto N = featuresX_ord_X.size();
+
+		long stride = N / std::min<long>(stride_lim, (long)(std::sqrt(N))+0.5);
+		long frX = 0, toX = N;
+		long frY = 0, toY = N;
+		std::pair<long,long> result;
+		while(true) {
+
+			std::vector<long> x_ind = get_n_indices(frX, toX, stride);
+			std::vector<long> y_ind = get_n_indices(frY, toY, stride);
+			result = evaluate_at_positions(x_ind, y_ind);
+
+			frX = std::max<long>( result.first - stride, 0l);
+			frY = std::max<long>( result.second - stride, 0);
+			toX = std::min<long>( result.first + stride, N);
+			toY = std::min<long>( result.second + stride, N);
+			if(stride == 1) {
+				break;
+			}
+			stride = stride / stride_decr;
+			if(stride > 1)
+				stride = 1;
+
+		}
+
+		while(result.second< sweep_position) {
+			sweep_backward();
+		}
+		while(result.second> sweep_position) {
+			sweep_forward();
+		}
+
+		OptimalSpline s;
+		s.selection = evaluate_at_indices(result.first, result.second);
+		s.remainder = decombine_variances_ex(total_var, s.selection);
+		s.X = featuresX_ord_X[result.first];
+		s.Y = featuresX_ord_X[result.first];
+		s.loglik = evaluate_spline_loglik(total_var, s.selection);
+		return s;
+	}
+};
 
 
 #endif /* SRC_EVALUATE_MEAN_VAR_2D_H_ */

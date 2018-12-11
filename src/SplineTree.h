@@ -39,6 +39,7 @@ MeanAndVariance<T> decombine_variances_ex(MeanAndVariance<T> one, MeanAndVarianc
 		return result;
 	}
 	if(one.count==1 and oth.count == 1) {
+
 		assert(std::abs(oth.mean - one.mean) < 1e-7);
 		return MeanAndVariance<T>{0,0,0};
 	}
@@ -125,10 +126,32 @@ struct SplineTree {
     	other.root = nullptr;
     }
 
+
+   void insert_val_impl(Node *n, KeyType key, ValueType value) const {
+    	if(n) {
+    	   if (cmp(key, n->key)) {
+				insert_val_impl(n->L, key, value);
+			}
+			else if(cmp(n->key, key)) {
+				insert_val_impl(n->R, key, value);
+			}
+			else {
+				 n->intr_mean_var = combine_variances_ex(n->intr_mean_var, MeanAndVariance<ValueType>{value, 0,1});
+			}
+
+    		n->mean_var = n->intr_mean_var;
+    		if(n->L)
+				   n->mean_var = combine_variances_ex(n->mean_var, n->L->mean_var);
+    		if(n->R)
+				n->mean_var = combine_variances_ex(n->mean_var, n->R->mean_var);
+    	}
+    }
+   	void insert_val(double key, double value) {
+    	insert_val_impl(root,key,value);
+   	}
     void insert(double key, double value) {
     	root = insert_node(root, cmp, key, value);
     }
-
     void delete_val_impl(Node *n, KeyType key, ValueType value) const {
     	if(n) {
     	   if (cmp(key, n->key)) {

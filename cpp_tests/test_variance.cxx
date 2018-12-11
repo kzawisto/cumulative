@@ -59,12 +59,64 @@ TEST(test, two_dim_lookup) {
 	for(size_t i =0;i < result1.size();++i) {
 		ASSERT_EQ(result1[i],result2[i]);
 	}
-	std::cout<<"\n";
-	std::cout<<result1[0]<<result2[0]<<"\n";
-	std::cout<<result1[1]<<result2[1]<<"\n";
-	std::cout<<result1[2]<<result2[2]<<"\n";
-	std::cout<<result1[3]<<result2[3]<<"\n";
 	//response = s_features.reorder(response);
+}
+
+TEST(test, two_dim_optimize) {
+	std::vector<double> featuresX ;
+	std::vector<double> featuresY ;
+	std::vector<double> response ;
+	srand(10);
+	for(int i =0;i <1000;++i) {
+		featuresX.push_back(gaus_var());
+		response.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+		featuresY.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+	}
+
+	auto spline = get_optimal_spline(featuresX, featuresY, response);
+	MeanVar2dEvaluator eva(featuresX, featuresY, response);
+	auto spline2 = eva.run_optim();
+	std::cout<<"\n"<<spline<<"\n"<<spline2<<"\n";
+
+	MeanVar2dEvaluator eva2(featuresX, featuresY, response);
+	eva2.stride_decr = 2;
+	std::cout<<eva2.run_optim();
+}
+
+TEST(test, compare_evaluator_to_get_mean_var) {
+
+	std::vector<double> featuresX ;
+	std::vector<double> featuresY ;
+	std::vector<double> response ;
+	srand(10);
+	for(int i =0;i <100;++i) {
+		featuresX.push_back(gaus_var());
+		response.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+		featuresY.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+	}
+
+	MeanVar2dEvaluator eva(featuresX, featuresY, response);
+	IdxSort sorter(featuresY);
+	auto fX = sorter.reorder(featuresX);
+	auto fY = sorter.reorder(featuresY);
+	auto frr = sorter.reorder(response);
+
+	auto res2 = std::vector<MeanAndVariance<double>>();
+
+	for(int i =0;i < featuresX.size(); ++i) {
+		eva.sweep_forward();
+	}
+	for(int i =0;i < featuresX.size(); ++i) {
+		eva.sweep_backward();
+	}
+	for(int i =0;i < featuresX.size(); ++i) {
+		res2.push_back(eva.spline_tree.query_var_above_or_eq(fX[i]));
+		eva.sweep_forward();
+	}
+	auto result1 = evaluate_mean_var_2d(fX,fY,frr);
+	for(auto i =0;i <100;++i) {
+		ASSERT_TRUE(result1[i] == res2[i]);
+	}
 }
 TEST(test, combined_variance) {
 

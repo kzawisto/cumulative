@@ -13,7 +13,8 @@
 struct IdxSort {
 
 	std::vector<long> indices, indices_inverse;
-	IdxSort(const std::vector<double> & v) : indices(v.size()), indices_inverse(v.size()){
+	template<typename T>
+	IdxSort(const std::vector<T> & v) : indices(v.size()), indices_inverse(v.size()){
 		for(std::size_t i  =0 ;i < v.size();++i) {
 			indices[i]= i;
 		}

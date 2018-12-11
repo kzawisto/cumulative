@@ -118,15 +118,7 @@ inline MaxMin get_kstat_ex(const std::vector<Point> & s1, const std::vector<Poin
 	}
 	return get_kstat(x_s1, y_s1, x_s2, y_s2);
 }
-inline std::vector<double> query_vals(
-		std::vector<double> vec_X_vals,
-		std::vector<double> vec_Y_vals,
-		std::vector<double> vec_vals,
-		std::vector<double> vec_X_evaluation,
-		std::vector<double> vec_Y_evaluation
-) {
 
-}
 
 
 #endif /* SRC_KS_STAT_H_ */
