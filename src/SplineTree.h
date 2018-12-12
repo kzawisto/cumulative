@@ -183,7 +183,7 @@ struct SplineTree {
     	}
     }
     long evaluate_height() {
-    	evaluate_height_impl(root);
+    	return evaluate_height_impl(root);
     }
     static void set_mean_var_values_impl(Node * n) {
     	if(n) {
