@@ -151,6 +151,7 @@ struct MeanVar2dEvaluator {
 		 response_ord_y = ord_by_y.reorder(response);
 		 auto response_ord_x = ord_by_x.reorder(response);
 		 spline_tree = populate_tree(featuresX_ord_X, response_ord_x);
+		 std::cout<<"tree height is "<< spline_tree.evaluate_height()<<"\n";
 		 total_var = get_mean_and_variance(response.begin(), response.end());
 	}
 	void sweep_forward() {

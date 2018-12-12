@@ -175,6 +175,16 @@ struct SplineTree {
     void delete_val(KeyType key, ValueType value) {
     	delete_val_impl(root, key, value);
     }
+    long evaluate_height_impl(Node * n) {
+    	if(not n) {
+    		return 0;
+    	} else {
+    		return 1 + std::max(evaluate_height_impl(n->L), evaluate_height_impl(n->R));
+    	}
+    }
+    long evaluate_height() {
+    	evaluate_height_impl(root);
+    }
     static void set_mean_var_values_impl(Node * n) {
     	if(n) {
     		n->mean_var = n->intr_mean_var;

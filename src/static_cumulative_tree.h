@@ -274,7 +274,6 @@ struct CumulativeTree {
     	   reset_extrema(n);
     	}
     }
-
     void delete_val(KeyType key, ValueType value) {
     	delete_val_impl(root, key, value);
     }
