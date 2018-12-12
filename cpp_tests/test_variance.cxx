@@ -33,7 +33,7 @@ TEST(test, spline_tree) {
 	ASSERT_TRUE(one == other);
 }
 double gaus_var() {
-	return gauss_quantile(rand() % 1000000  / 1000000.0);
+	return gauss_quantile(rand() % 1000000  / 1000004.0+1e-8);
 }
 TEST(test, two_dim_lookup) {
 
@@ -67,20 +67,21 @@ TEST(test, two_dim_optimize) {
 	std::vector<double> featuresY ;
 	std::vector<double> response ;
 	srand(10);
-	for(int i =0;i <1000;++i) {
+	for(int i =0;i <10000;++i) {
 		featuresX.push_back(gaus_var());
-		response.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
-		featuresY.push_back(gauss_quantile(rand() % 1000000  / 1000000.0));
+		response.push_back(gauss_quantile((rand() % 1000000 ) / 1000003.0 +1e-11 ));
+		featuresY.push_back(gauss_quantile((rand() % 1000000) / 1000003.0 +1e-11));
 	}
 
 	auto spline = get_optimal_spline(featuresX, featuresY, response);
+	std::cout<<"\n"<<spline;
 	MeanVar2dEvaluator eva(featuresX, featuresY, response);
 	auto spline2 = eva.run_optim();
-	std::cout<<"\n"<<spline<<"\n"<<spline2<<"\n";
+	//std::cout<<"\n"<<spline<<"\n"<<spline2<<"\n";
 
-	MeanVar2dEvaluator eva2(featuresX, featuresY, response);
-	eva2.stride_decr = 2;
-	std::cout<<eva2.run_optim();
+	//MeanVar2dEvaluator eva2(featuresX, featuresY, response);
+	//eva2.stride_decr = 2;
+	//std::cout<<eva2.run_optim();
 }
 
 TEST(test, compare_evaluator_to_get_mean_var) {

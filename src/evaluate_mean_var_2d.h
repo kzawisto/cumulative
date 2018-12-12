@@ -140,7 +140,7 @@ struct MeanVar2dEvaluator {
 	MeanAndVariance<double> total_var;
 	SplineTree spline_tree;
 	long stride_lim=1000;
-	long stride_decr=5;
+	long stride_decr=3;
 	MeanVar2dEvaluator(std::vector<double> featuresX, std::vector<double> featuresY, std::vector<double> response) {
 		IdxSort ord_by_y(featuresY);
 		IdxSort ord_by_x(featuresX);
@@ -151,7 +151,6 @@ struct MeanVar2dEvaluator {
 		 response_ord_y = ord_by_y.reorder(response);
 		 auto response_ord_x = ord_by_x.reorder(response);
 		 spline_tree = populate_tree(featuresX_ord_X, response_ord_x);
-		 std::cout<<"tree height is "<< spline_tree.evaluate_height()<<"\n";
 		 total_var = get_mean_and_variance(response.begin(), response.end());
 	}
 	void sweep_forward() {
@@ -177,7 +176,7 @@ struct MeanVar2dEvaluator {
 			sweep_backward();
 		}
 		for(size_t i = 0;i < Y_indices.size();++i) {
-			while(y_sorted[0]< sweep_position) {
+			while(y_sorted[i]< sweep_position) {
 				sweep_backward();
 			}
 			while(y_sorted[i]> sweep_position) {
