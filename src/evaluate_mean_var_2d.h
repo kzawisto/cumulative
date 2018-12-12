@@ -149,7 +149,8 @@ struct MeanVar2dEvaluator {
 		 featuresX_ord_X = ord_by_x.reorder(featuresX);
 		 featuresY_ord_Y = ord_by_y.reorder(featuresY);
 		 response_ord_y = ord_by_y.reorder(response);
-		 spline_tree = populate_tree(featuresX_ord_Y, response_ord_y);
+		 auto response_ord_x = ord_by_x.reorder(response);
+		 spline_tree = populate_tree(featuresX_ord_X, response_ord_x);
 		 total_var = get_mean_and_variance(response.begin(), response.end());
 	}
 	void sweep_forward() {
@@ -184,13 +185,11 @@ struct MeanVar2dEvaluator {
 
 			auto res = evaluate_at_indices(x_sorted[i], y_sorted[i]);
 			auto loglik = evaluate_spline_loglik(total_var, res);
-			std::cout<<loglik<<" ";
 			if(loglik > loglik_max) {
 				loglik_max=loglik;
 				i_max = i;
 			}
 		}
-		std::cout<<"\nchosen:"<<x_sorted[i_max]<<" "<< y_sorted[i_max]<<"\n";
 
 		return {x_sorted[i_max], y_sorted[i_max]};
 	}
