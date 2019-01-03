@@ -1,7 +1,8 @@
 
-Evaluation of 2D Kolmogorov statistics in n log n complexity - you can immediately process few million of samples.
+Evaluation of bivariate 2D Kolmogorov statistics in n log n complexity - you can process few mln samples few orders of magnitude faster than existing
+implementations in e.g. "Numerical Recipes".
 
-For details of algorithm see 
+For details of the algorithm see 
 
 https://github.com/kzawisto/cumulative/blob/master/docs/cumulative.pdf
 
