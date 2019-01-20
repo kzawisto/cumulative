@@ -1,8 +1,9 @@
 
-Evaluation of bivariate 2D Kolmogorov statistics in n log n complexity - you can process few mln samples few orders of magnitude faster than existing
+Evaluation of bivariate Kolmogorov statistics in n log n complexity - you can process few mln samples few orders of magnitude faster than existing implementations.
 
-implementations in e.g. "Numerical Recipes".
+For definition, usage and properties of bivariate Kolmogorov statistics see original paper:
 
+ A. Justel, D. Peña, R. Zamar "A multivariate Kolmogorov–Smirnov test of goodness of fit" Statistics and Probability Letters, 35 (3)
 For details of the algorithm see 
 
 https://github.com/kzawisto/cumulative/blob/master/docs/cumulative.pdf
